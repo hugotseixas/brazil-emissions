@@ -1,0 +1,361 @@
+---
+title: "Greenhouse Gas Emission and Removal in Brazil"
+author: "Hugo Tameirão Seixas"
+institute: UNICAMP
+format: 
+  revealjs:
+    theme: [default, custom.scss]
+    reference-location: document
+---
+
+```{r}
+#| label: load-libraries
+#| include: false
+
+library(highcharter)
+library(shades)
+library(tidyverse)
+
+```
+
+```{r}
+#| label: load-data
+#| include: false
+
+url <- "https://seeg-br.s3.amazonaws.com/Estat%C3%ADsticas/SEEG9/1-SEEG9_GERAL-BR_UF_2021.10.26_-_SITE.xlsx"
+
+tf <- tempfile(fileext = ".xlsx")
+
+curl::curl_download(url, tf)
+  
+seeg <- readxl::read_excel(tf, sheet = 3)
+
+# Organize data
+colnames(seeg) <-
+   c(
+    "level_1", "level_2", "level_3", "level_4", "level_5", "level_6",
+    "type", "gas", "state", "activity", "product", 1970:2020
+  )
+
+seeg <- seeg |>
+  tidyr::pivot_longer(cols = 12:62, names_to = "year", values_to = "emission") |>
+  dplyr::mutate(emission = as.numeric(stringr::str_remove_all(emission, ",")))
+
+```
+
+```{r}
+#| label: figures-theme
+#| include: false
+
+a11y_theme <- 
+  hc_theme(
+    chart = list(backgroundColor = "#ffffff")
+  )
+
+```
+
+## How much Brazil emits? Does it matter?
+
+<br>
+
+::: incremental
+
+```{r}
+
+br_emission_2020 <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) == 2020
+  ) |>
+  dplyr::group_by(year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-9, digits = 0, source = "Total") |>
+  pull(emission)
+
+```
+
+-   Brazil emitted <B>`r round(br_emission_2020, 1)` billion tonnes</B> of CO<sub>2</sub>-eq in 2020 [^1]
+
+-   The world emitted <B>50.1 billion tonnes</B> of CO<sub>2</sub>-eq in 2020 [^2]
+
+-   So Brazil emitted only <B>`r round(br_emission_2020/50.1 * 100, 1)`%</B> of all the emission in 2020?
+
+- But countries that emitted lass than Brazil accounts for almost <B>40%</B> of all the emissions!
+
+- [**Every country have to decrease emissions!**]{style="color:#cc0000"}
+
+:::
+
+[^1]: Climate Observatory: [Greenhouse Gas Emissions and Removal Estimation System](https://seeg.eco.br/en?cama_set_language=en)
+[^2]: Rhodium Group: [Preliminary 2020 Global Greenhouse Gas Emissions Estimates](https://rhg.com/research/preliminary-2020-global-greenhouse-gas-emissions-estimates/)
+
+## Total Emissions {.smaller}
+
+::: panel-tabset
+
+### Total Emissions
+
+```{r}
+#| label: total-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990
+  ) |>
+  dplyr::group_by(year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6, digits = 0, source = "Total")
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = source)
+  ) |>
+  hc_yAxis(
+    max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = c("#5f5f5f"))
+
+hc_plot
+
+```
+
+### Emissions by Sector
+
+```{r}
+#| label: sector-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990
+  ) |>
+  dplyr::group_by(level_1, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_1)
+  ) |>
+  hc_yAxis(
+    max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = c("#2a0504", "#975c3f", "#3c8590", "#173a1a", "#ea7115"))
+
+hc_plot
+
+```
+
+### Fraction by Sector
+
+```{r}
+#| label: fraction-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990
+  ) |>
+  dplyr::group_by(level_1, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "keep") |>
+  group_by(year) |>
+  mutate(emission = emission / sum(emission) * 100)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_1)
+  ) |>
+  hc_yAxis(
+    max = 100, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = c("#2a0504", "#975c3f", "#3c8590", "#173a1a", "#ea7115"))
+
+hc_plot
+
+```
+
+:::
+
+## Residues {.smaller}
+
+::: panel-tabset
+
+### Emissions
+
+```{r}
+#| label: residue-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990,
+    level_1 == "Resíduos"
+  ) |>
+  dplyr::group_by(level_3, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_3)
+  ) |>
+  hc_yAxis(
+    #max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = as.vector(gradient(c("#FC9D88","#EF3106", "#501002"), 5)))
+
+hc_plot
+
+```
+
+### Fraction
+
+###
+
+:::
+
+## Industry
+
+::: panel-tabset
+
+### Emissions
+
+```{r}
+#| label: industry-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990,
+    level_1 == "Processos Industriais"
+  ) |>
+  dplyr::group_by(level_2, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_2)
+  ) |>
+  hc_yAxis(
+    #max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = as.vector(gradient(c("#F0BCD1","#D23775", "#430F24"), 6)))
+
+hc_plot
+
+```
+
+:::
