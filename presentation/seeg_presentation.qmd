@@ -19,7 +19,7 @@ library(tidyverse)
 ```
 
 ```{r}
-#| label: load-data
+#| label: load-seeg-data
 #| include: false
 
 url <- "https://seeg-br.s3.amazonaws.com/Estat%C3%ADsticas/SEEG9/1-SEEG9_GERAL-BR_UF_2021.10.26_-_SITE.xlsx"
@@ -28,7 +28,7 @@ tf <- tempfile(fileext = ".xlsx")
 
 curl::curl_download(url, tf)
   
-seeg <- readxl::read_excel(tf, sheet = 3)
+seeg <- readxl::read_excel(tf, sheet = 4)
 
 # Organize data
 colnames(seeg) <-
@@ -83,7 +83,7 @@ br_emission_2020 <- seeg |>
 
 - But countries that emitted lass than Brazil accounts for almost <B>40%</B> of all the emissions!
 
-- [**Every country have to decrease emissions!**]{style="color:#cc0000"}
+- <B>Every country have to decrease emissions!</B>
 
 :::
 
@@ -143,6 +143,42 @@ hc_plot
 
 ```
 
+### Map
+
+```{r}
+#| label: total-emissions-map
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) == 2020,
+  ) |>
+  dplyr::group_by(state) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6) |>
+  rename(`postal-code` = state)
+
+hc_map <-
+hcmap(
+  map = "countries/br/br-all", 
+  data = plot_data,
+  joinBy = "postal-code", 
+  value = "emission",
+  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
+) |>
+   hc_colorAxis(
+    minColor = "#b7b7b7",
+    maxColor = "#434343"
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+
+hc_map
+
+```
+
 ### Emissions by Sector
 
 ```{r}
@@ -186,7 +222,7 @@ hc_plot <-
     column = list(pointWidth = 22)
   ) |>
   hc_add_theme(a11y_theme) |>
-  hc_colors(colors = c("#2a0504", "#975c3f", "#3c8590", "#173a1a", "#ea7115"))
+  hc_colors(colors = c("#432905", "#313E59", "#467852", "#8B204B", "#C22805"))
 
 hc_plot
 
@@ -236,17 +272,56 @@ hc_plot <-
     column = list(pointWidth = 22)
   ) |>
   hc_add_theme(a11y_theme) |>
-  hc_colors(colors = c("#2a0504", "#975c3f", "#3c8590", "#173a1a", "#ea7115"))
+  hc_colors(colors = c("#432905", "#313E59", "#467852", "#8B204B", "#C22805"))
 
 hc_plot
 
 ```
+
+### Description
 
 :::
 
 ## Residues {.smaller}
 
 ::: panel-tabset
+
+### Map
+
+```{r}
+#| label: residue-emissions-map
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) == 2020,
+    level_1 == "Resíduos"
+  ) |>
+  dplyr::group_by(state) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6) |>
+  rename(`postal-code` = state)
+
+hc_map <-
+hcmap(
+  map = "countries/br/br-all", 
+  data = plot_data,
+  joinBy = "postal-code", 
+  value = "emission",
+  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
+) |>
+   hc_colorAxis(
+    minColor = "#FC9D88",
+    maxColor = "#EF3106"
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+
+hc_map
+
+```
 
 ### Emissions
 
@@ -300,13 +375,104 @@ hc_plot
 
 ### Fraction
 
+```{r}
+#| label: residue-fraction
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990,
+    level_1 == "Resíduos"
+  ) |>
+  dplyr::group_by(level_3, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6, digits = 0) |>
+  group_by(year) |>
+  mutate(emission = emission / sum(emission) * 100)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_3)
+  ) |>
+  hc_yAxis(
+    #max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = as.vector(gradient(c("#FC9D88","#EF3106", "#501002"), 5)))
+
+hc_plot
+
+```
+
+### Description
+
+### Solutions
+
 ###
 
 :::
 
-## Industry
+## Industry {.smaller}
 
 ::: panel-tabset
+
+### Map
+
+```{r}
+#| label: industry-emissions-map
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) == 2020,
+    level_1 == "Processos Industriais"
+  ) |>
+  dplyr::group_by(state) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6) |>
+  rename(`postal-code` = state)
+
+hc_map <-
+hcmap(
+  map = "countries/br/br-all", 
+  data = plot_data,
+  joinBy = "postal-code", 
+  value = "emission",
+  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
+) |>
+   hc_colorAxis(
+    minColor = "#F0BCD1",
+    maxColor = "#D23775"
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+
+hc_map
+
+```
 
 ### Emissions
 
@@ -357,5 +523,59 @@ hc_plot <-
 hc_plot
 
 ```
+
+### Fraction
+
+### Description
+
+### Solutions
+
+:::
+
+## Energy {.smaller}
+
+::: panel-tabset
+
+### Map
+
+### Emissions
+
+### Fraction
+
+### Description
+
+### Solutions
+
+:::
+
+## Agriculture {.smaller}
+
+::: panel-tabset
+
+### Map
+
+### Emissions
+
+### Fraction
+
+### Description
+
+### Solutions
+
+:::
+
+## Land Use Change {.smaller}
+
+::: panel-tabset
+
+### Map
+
+### Emissions
+
+### Fraction
+
+### Description
+
+### Solutions
 
 :::
