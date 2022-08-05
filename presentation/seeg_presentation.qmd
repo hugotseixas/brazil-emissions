@@ -404,7 +404,7 @@ hc_plot <-
     endOnTick = FALSE, 
     title = list(
       useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
       style = list(fontSize = "18px")
     ),
     labels = list(style = list(fontSize = "14px"))
@@ -555,7 +555,7 @@ hc_plot <-
     endOnTick = FALSE, 
     title = list(
       useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
       style = list(fontSize = "18px")
     ),
     labels = list(style = list(fontSize = "14px"))
@@ -706,7 +706,7 @@ hc_plot <-
     endOnTick = FALSE, 
     title = list(
       useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
       style = list(fontSize = "18px")
     ),
     labels = list(style = list(fontSize = "14px"))
@@ -927,20 +927,23 @@ hc_plot <-
     endOnTick = FALSE, 
     title = list(
       useHTML = TRUE, 
-      text = "Emission fraction", 
-      style = list(fontSize = "18px")
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
+      style = list(fontSize = "18px", fontWeight = "bold")
     ),
-    labels = list(style = list(fontSize = "14px"))
+    labels = list(style = list(fontSize = "18px"))
   ) |>
   hc_xAxis(
     title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+    labels = list(style = list(fontSize = "18px"))
   ) |>
   hc_tooltip(
+    style = list(fontSize = "18px"),
+    valueDecimals = 0, 
     valueSuffix = "%",
-    formatter = JS(
-      "function() { return(Math.round(Math.abs(this.point.y))) }"
-    )
+    shared = TRUE
+  ) |>
+  hc_legend(
+    itemStyle = list(fontSize = "16px")
   ) |>
   hc_plotOptions(
     series = list(stacking = "normal"), 
