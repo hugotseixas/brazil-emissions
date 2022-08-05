@@ -94,6 +94,42 @@ br_emission_2020 <- seeg |>
 
 ::: panel-tabset
 
+### Map
+
+```{r}
+#| label: total-emissions-map
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) == 2020,
+  ) |>
+  dplyr::group_by(state) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6) |>
+  rename(`postal-code` = state)
+
+hc_map <-
+hcmap(
+  map = "countries/br/br-all", 
+  data = plot_data,
+  joinBy = "postal-code", 
+  value = "emission",
+  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
+) |>
+   hc_colorAxis(
+    minColor = "#b7b7b7",
+    maxColor = "#434343"
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+
+hc_map
+
+```
+
 ### Total Emissions
 
 ```{r}
@@ -140,42 +176,6 @@ hc_plot <-
   hc_colors(colors = c("#5f5f5f"))
 
 hc_plot
-
-```
-
-### Map
-
-```{r}
-#| label: total-emissions-map
-#| echo: false
-#| output-location: slide
-
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
-
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#b7b7b7",
-    maxColor = "#434343"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
-
-hc_map
 
 ```
 
@@ -826,6 +826,64 @@ hc_map
 ```
 
 ### Emissions
+
+```{r}
+#| label: luc-emissions
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg %>%
+  filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão", "Remoção"),
+    as.numeric(year) >= 1990,
+    level_1 == "Mudança de Uso da Terra e Floresta"
+  ) %>%
+  group_by(level_2, year) %>%
+  summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") %>%
+  mutate(
+    emission = emission * 1e-6,
+    level_2 = factor(
+      level_2,
+      levels = c(
+        "Resíduos Florestais", "Alterações de Uso do Solo",
+        "Remoção em Áreas Protegidas", "Remoção por Mudança de Uso da Terra",
+        "Remoção por Vegetação Secundária"
+      )
+    )
+  )
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_2)
+  ) |>
+  hc_yAxis(
+    #max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = as.vector(gradient(c("#8BBB96","#5B9A69", "#26402C"), 5)))
+
+hc_plot
+
+```
 
 ### Fraction
 
