@@ -526,6 +526,56 @@ hc_plot
 
 ### Fraction
 
+```{r}
+#| label: industry-fraction
+#| echo: false
+#| output-location: slide
+
+plot_data <- seeg |>
+  dplyr::filter(
+    gas == "CO2e (t) GWP-AR5",
+    type %in% c("Emissão"),
+    as.numeric(year) >= 1990,
+    level_1 == "Processos Industriais"
+  ) |>
+  dplyr::group_by(level_2, year) |>
+  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
+  dplyr::mutate(emission = emission * 1e-6) |>
+  group_by(year) |>
+  mutate(emission = emission / sum(emission) * 100)
+
+hc_plot <- 
+  hchart(
+    object = plot_data, 
+    type = "column", 
+    hcaes(x = year, y = emission, group = level_2)
+  ) |>
+  hc_yAxis(
+    #max = 3200, 
+    endOnTick = FALSE, 
+    title = list(
+      useHTML = TRUE, 
+      text = "CO<sub>2</sub>-eq emissions (Mt)", 
+      style = list(fontSize = "18px")
+    ),
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_xAxis(
+    title = list(text = NULL), 
+    labels = list(style = list(fontSize = "14px"))
+  ) |>
+  hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
+  hc_plotOptions(
+    series = list(stacking = "normal"), 
+    column = list(pointWidth = 22)
+  ) |>
+  hc_add_theme(a11y_theme) |>
+  hc_colors(colors = as.vector(gradient(c("#F0BCD1","#D23775", "#430F24"), 6)))
+
+hc_plot
+
+```
+
 ### Description
 
 ### Solutions
