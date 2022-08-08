@@ -49,11 +49,11 @@ source("R/plot_obj.R")
 [^1]: Climate Observatory: [Greenhouse Gas Emissions and Removal Estimation System](https://seeg.eco.br/en?cama_set_language=en)
 [^2]: Rhodium Group: [Preliminary 2020 Global Greenhouse Gas Emissions Estimates](https://rhg.com/research/preliminary-2020-global-greenhouse-gas-emissions-estimates/)
 
-## Total Emissions {.smaller}
+## Total Emissions
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: total-emissions-map
@@ -68,7 +68,7 @@ hc_map
 
 ```
 
-### Total Emissions
+### <b><font size="5">Total Emissions</font></b>
 
 ```{r}
 #| label: total-emissions
@@ -88,7 +88,7 @@ hc_plot
 
 ```
 
-### Emissions by Sector
+### <b><font size="5">Emissions by Sector</font></b>
 
 ```{r}
 #| label: sector-emissions
@@ -107,7 +107,7 @@ hc_plot
 
 ```
 
-### Fraction by Sector
+### <b><font size="5">Fraction by Sector</font></b>
 
 ```{r}
 #| label: fraction-emissions
@@ -142,15 +142,15 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
 :::
 
-## Residues {.smaller}
+## Residues
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: residue-emissions-map
@@ -165,7 +165,7 @@ hc_map
 
 ```
 
-### Emissions
+### <b><font size="5">Emissions</font></b>
 
 ```{r}
 #| label: residue-emissions
@@ -189,7 +189,7 @@ hc_plot
 
 ```
 
-### Fraction
+### <b><font size="5">Fraction</font></b>
 
 ```{r}
 #| label: residue-fraction
@@ -223,19 +223,19 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
-### Solutions
+### <b><font size="5">Solutions</font></b>
 
 ###
 
 :::
 
-## Industry {.smaller}
+## Industry
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: industry-emissions-map
@@ -250,7 +250,7 @@ hc_map
 
 ```
 
-### Emissions
+### <b><font size="5">Emissions</font></b>
 
 ```{r}
 #| label: industry-emissions
@@ -273,7 +273,7 @@ hc_plot
 
 ```
 
-### Fraction
+### <b><font size="5">Fraction</font></b>
 
 ```{r}
 #| label: industry-fraction
@@ -311,17 +311,21 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
-### Solutions
+- "Production processes in industries, including the non-energy consumption of fuels as raw material".
+
+- "The burning of fuels for energy purposes is reported in the Energy sector". 
+
+### <b><font size="5">Solutions</font></b>
 
 :::
 
-## Energy {.smaller}
+## Energy
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: energy-emissions-map
@@ -336,7 +340,7 @@ hc_map
 
 ```
 
-### Emissions
+### <b><font size="5">Emissions</font></b>
 
 ```{r}
 #| label: energy-emissions
@@ -360,7 +364,7 @@ hc_plot
 
 ```
 
-### Fraction
+### <b><font size="5">Fraction</font></b>
 
 ```{r}
 #| label: energy-fraction
@@ -399,17 +403,23 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
-### Solutions
+- "Exploration and conversion of primary energy sources (energy products provided by nature in their direct form, e.g., petroleum, natural gas, coal, etc.)";
+
+- "Transmission and distribution of fuels";
+
+- "Use of fuels in installations and equipment".
+
+### <b><font size="5">Solutions</font></b>
 
 :::
 
-## Agriculture {.smaller}
+## Agriculture
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: agriculture-emissions-map
@@ -424,7 +434,7 @@ hc_map
 
 ```
 
-### Emissions
+### <b><font size="5">Emissions</font></b>
 
 ```{r}
 #| label: agriculture-emissions
@@ -447,7 +457,7 @@ hc_plot
 
 ```
 
-### Fraction
+### <b><font size="5">Fraction</font></b>
 
 ```{r}
 #| label: agriculture-fraction
@@ -485,7 +495,7 @@ hc_plot
 
 ```
 
-### Emissions NCI
+### <b><font size="5">Emissions NCI</font></b>
 
 ```{r}
 #| label: agriculture-nci-emissions
@@ -521,9 +531,15 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
-### Solutions
+- Agricultural and livestock activities;
+
+- Agriculture: Mainly related to the agricultural production process and the use of nitrogen fertilizers;
+
+- Livestock: The main parameters used to estimate emissions refer to population, type of feedlot, digestibility, weight, and animal productivity.
+
+### <b><font size="5">Solutions</font></b>
 
 :::
 
@@ -531,7 +547,7 @@ hc_plot
 
 ::: panel-tabset
 
-### Map
+### <b><font size="5">Map</font></b>
 
 ```{r}
 #| label: luc-emissions-map
@@ -546,7 +562,7 @@ hc_map
 
 ```
 
-### Emissions
+### <b><font size="5">Emissions</font></b>
 
 ```{r}
 #| label: luc-emissions
@@ -569,7 +585,7 @@ hc_plot
 
 ```
 
-### Fraction
+### <b><font size="5">Fraction</font></b>
 
 ```{r}
 #| label: luc-fraction
@@ -612,8 +628,8 @@ hc_plot
 
 ```
 
-### Description
+### <b><font size="5">Description</font></b>
 
-### Solutions
+### <b><font size="5">Solutions</font></b>
 
 :::
