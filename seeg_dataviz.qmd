@@ -1,7 +1,9 @@
 ---
 title: "Greenhouse Gas Emission and Removal in Brazil"
 author: "Hugo Tameirão Seixas"
+url: hugotseixas.com
 institute: UNICAMP
+date: 09/08/2022
 format: 
   revealjs:
     theme: [default, custom.scss]
