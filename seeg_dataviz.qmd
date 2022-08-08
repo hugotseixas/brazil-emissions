@@ -249,8 +249,6 @@ hc_plot
 
 - <B>INFRASTRUCTURE</B> - Expand the coverage sewage services, considering the entire municipality
 
-###
-
 :::
 
 ## Industry
