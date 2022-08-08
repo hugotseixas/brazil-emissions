@@ -144,6 +144,14 @@ hc_plot
 
 ### <b><font size="5">Description</font></b>
 
+- The emissions are divided into 5 main sectors by the National Inventory of Greenhouse Gas Emissions and Removals;
+
+- The inventory accounts for emissions and removals only inside the national territory, so emissions from airplanes and ships are not counted (bunker emissions);
+
+- The descriptions of emissions and removals of this presentation are based upon the document from the [Fourth National Inventory](https://www.gov.br/mcti/pt-br/acompanhe-o-mcti/sirene/publicacoes/comunicacoes-nacionais-do-brasil-a-unfccc/arquivos/4comunicacao/4_com_nac_brasil_web.pdf) and the [Climate Observatory Emissions Analysis](https://seeg-br.s3.amazonaws.com/Documentos%20Analiticos/SEEG_9/OC_03_relatorio_2021_FINAL.pdf);
+
+- [Proposed Solutions](https://seeg-br.s3.amazonaws.com/downloads/20210819_SeegSolucoes_Final_v3.pdf) are presented by the Climate Observatory, some of them will be discussed here.
+
 :::
 
 ## Residues
@@ -225,7 +233,19 @@ hc_plot
 
 ### <b><font size="5">Description</font></b>
 
+- Emissions from solid and liquid waste disposal and treatment;
+
+- Anaerobic degradation process that occurs in the final disposal of solid waste in landfills and dumps;
+
+- Dumping of waste water that has or has not undergone any treatment process.
+
 ### <b><font size="5">Solutions</font></b>
+
+- <B>EDUCATION</B> - Expand and strengthen environmental education program focused on waste management;
+
+- <B>TAX</B> - Implement the charge for public service of management of solid urban waste management;
+
+- <B>INFRASTRUCTURE</B> - Expand the coverage sewage services, considering the entire municipality
 
 ###
 
@@ -313,9 +333,9 @@ hc_plot
 
 ### <b><font size="5">Description</font></b>
 
-- "Production processes in industries, including the non-energy consumption of fuels as raw material".
+- Production processes in industries, including the non-energy consumption of fuels as raw material.
 
-- "The burning of fuels for energy purposes is reported in the Energy sector". 
+- The burning of fuels for energy purposes is reported in the Energy sector. 
 
 ### <b><font size="5">Solutions</font></b>
 
@@ -405,13 +425,23 @@ hc_plot
 
 ### <b><font size="5">Description</font></b>
 
-- "Exploration and conversion of primary energy sources (energy products provided by nature in their direct form, e.g., petroleum, natural gas, coal, etc.)";
+- Exploration and conversion of primary energy sources (energy products provided by nature in their direct form, e.g., petroleum, natural gas, coal, etc.);
 
-- "Transmission and distribution of fuels";
+- Transmission and distribution of fuels;
 
-- "Use of fuels in installations and equipment".
+- Use of fuels in installations and equipment;
+
+- Emissions estimates from fuels exportation and from bunkers are not accounted. 
 
 ### <b><font size="5">Solutions</font></b>
+
+- <B>TRANSPORT</B> - Establish maximum limits for parking spaces parking spaces for new buildings near public public transportation axes;
+
+- <B>TRANSPORT</B> - Creating routes for cargo transportation that do not enter the densest areas of the municipality;
+
+- <B>ELECTRICITY</B> - Substitute equipment with high energy consumption with more efficient options in public buildings;
+
+- <B>ELECTRICITY</B> - Promoting the generation of solar energy generation in public buildings.
 
 :::
 
@@ -541,6 +571,14 @@ hc_plot
 
 ### <b><font size="5">Solutions</font></b>
 
+- <B>BUREAUCRACY</B> - Accelerate the environmental regularization of the rural properties in the municipality;
+
+- <B>PAYMENT</B> - Establish the municipal program of Payment for Environmental Services;
+
+- <B>CREDIT</B> - Facilitate access to credit lines for the adoption of conservationist farming practices;
+
+- <B>TECHNOLOGY</B> - Promote the adoption and implementation of Crop-Livestock-Forestry Integration Systems (iLPF).
+
 :::
 
 ## Land Use Change
@@ -630,6 +668,39 @@ hc_plot
 
 ### <b><font size="5">Description</font></b>
 
+- Emissions and removals from carbon loss or gain,
+associated with land use and land cover change;
+
+- Biomass burning associated with land use and land cover dynamics;
+
+- Emissions and removals from forestry products manufactured and processed after wood harvesting;
+
+- <B>The inventory accounts only for emissions/removals related to human action, so removals from non-managed forests are not counted.</B>
+
 ### <b><font size="5">Solutions</font></b>
 
+- <B>FORESTATION</B> - Encourage urban tree planting actions in parks, squares, backyards, and public sidewalks in order to in order to increase forest cover;
+
+- <B>LAW ENFORCEMENT</B> - Promote land title regularization, control in the implementation of the forest code and strengthening of environmental management;
+
+- <B>LAW ENFORCEMENT</B> - Strengthen enforcement mechanisms and control of deforestation and illegal exploitation;
+
+- <B>TECHNOLOGY</B> - Stimulate and strengthen productive chains of sociobiodiversity with emphasis on innovation and bio-economy.
+
 :::
+
+## Discussion
+
+<br>
+
+- Priority sectors to curb Climate Change;
+
+<br>
+
+- Coupling local public policies to international goals;
+
+<br>
+
+- The ends and the means of Climate Change solutions [^3]
+
+[^3]: [Transforming land use governance: Global targets without equity miss the mark](https://onlinelibrary.wiley.com/doi/10.1002/eet.2027)
