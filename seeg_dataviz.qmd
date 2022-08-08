@@ -543,7 +543,7 @@ hc_plot
 
 :::
 
-## Land Use Change {.smaller}
+## Land Use Change
 
 ::: panel-tabset
 
