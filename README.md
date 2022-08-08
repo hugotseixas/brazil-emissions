@@ -14,3 +14,11 @@ TODO:
 
 - Improve style and format of the presentation;
 
+## License
+
+### Code
+
+The code in this repository, including all code samples in the notebooks, is released under the [GPL-3.0 license](LICENSE-CODE). Read more at the [GNU Operating System](https://www.gnu.org/licenses/gpl-3.0.html).
+
+### Text
+The text content of this repository, including presentations in .qmd and html format, is released under the [CC BY-SA 4.0 license](LICENSE-TEXT). Read more at [Creative Commons](https://creativecommons.org/licenses/by-sa/4.0/).
