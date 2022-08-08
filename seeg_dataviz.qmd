@@ -9,50 +9,23 @@ format:
 ---
 
 ```{r}
-#| label: load-libraries
+#| label: load-material
 #| include: false
 
 library(highcharter)
 library(shades)
+library(fs)
+library(here)
+library(curl)
+library(readxl)
 library(tidyverse)
 
-```
-
-```{r}
-#| label: load-seeg-data
-#| include: false
-
-url <- "https://seeg-br.s3.amazonaws.com/Estat%C3%ADsticas/SEEG9/1-SEEG9_GERAL-BR_UF_2021.10.26_-_SITE.xlsx"
-
-tf <- tempfile(fileext = ".xlsx")
-
-curl::curl_download(url, tf)
-  
-seeg <- readxl::read_excel(tf, sheet = 4)
-
-# Organize data
-colnames(seeg) <-
-   c(
-    "level_1", "level_2", "level_3", "level_4", "level_5", "level_6",
-    "type", "gas", "state", "activity", "product", 1970:2020
-  )
-
-seeg <- seeg |>
-  tidyr::pivot_longer(cols = 12:62, names_to = "year", values_to = "emission") |>
-  dplyr::mutate(emission = as.numeric(stringr::str_remove_all(emission, ",")))
+source("R/fig_theme.R")
+source("R/data_obj.R")
+source("R/plot_obj.R")
 
 ```
 
-```{r}
-#| label: figures-theme
-#| include: false
-
-a11y_theme <- 
-  hc_theme(
-    chart = list(backgroundColor = "#ffffff")
-  )
-
-```
 
 ## How much Brazil emits? Does it matter?
 
@@ -60,20 +33,6 @@ a11y_theme <-
 
 ::: incremental
 
-```{r}
-
-br_emission_2020 <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020
-  ) |>
-  dplyr::group_by(year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-9, digits = 0, source = "Total") |>
-  pull(emission)
-
-```
 
 -   Brazil emitted <B>`r round(br_emission_2020, 1)` billion tonnes</B> of CO<sub>2</sub>-eq in 2020 [^1]
 
@@ -101,30 +60,9 @@ br_emission_2020 <- seeg |>
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(total = TRUE)
 
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#b7b7b7",
-    maxColor = "#434343"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+hc_map <- maps_plot(min_color = "#b7b7b7", max_color = "#434343")
 
 hc_map
 
@@ -137,43 +75,14 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990
-  ) |>
-  dplyr::group_by(year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6, digits = 0, source = "Total")
+plot_data <- emissions_table(total = TRUE, type_list = "Emissão")
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = source)
-  ) |>
-  hc_yAxis(
-    max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = c("#5f5f5f"))
+  emissions_plot(
+    total = TRUE, 
+    group_id = "type",
+    color_list = c("#5f5f5f")
+  )
 
 hc_plot
 
@@ -186,43 +95,13 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990
-  ) |>
-  dplyr::group_by(level_1, year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+plot_data <- emissions_table(type_list = "Emissão")
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_1)
-  ) |>
-  hc_yAxis(
-    max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = c("#432905", "#313E59", "#467852", "#8B204B", "#C22805"))
+  emissions_plot(
+    group_id = "scope",
+    color_list = c("#432905", "#313E59", "#467852", "#8B204B", "#C22805")
+  )
 
 hc_plot
 
@@ -237,11 +116,10 @@ hc_plot
 
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão"),
-    as.numeric(year) >= 1990
+    year >= 1990
   ) |>
-  dplyr::group_by(level_1, year) |>
+  dplyr::group_by(scope, year) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "keep") |>
   group_by(year) |>
   mutate(emission = emission / sum(emission) * 100)
@@ -250,27 +128,13 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_1)
+    hcaes(x = year, y = emission, group = scope)
   ) |>
   hc_yAxis(
-    max = 100, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+    max = 100,
+    title = list(text = "Percentage CO<sub>2</sub>-eq emissions (%)")
   ) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = c("#432905", "#313E59", "#467852", "#8B204B", "#C22805"))
 
@@ -293,31 +157,9 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-    level_1 == "Resíduos"
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(seeg_scope = "Resíduos")
 
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#FC9D88",
-    maxColor = "#EF3106"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+hc_map <- maps_plot(min_color = "#FC9D88", max_color = "#EF3106")
 
 hc_map
 
@@ -330,44 +172,18 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990,
-    level_1 == "Resíduos"
-  ) |>
-  dplyr::group_by(level_3, year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+plot_data <- 
+  emissions_table(
+  seeg_scope = "Resíduos", 
+  seeg_activity = TRUE,
+  type_list = "Emissão"
+)
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_3)
-  ) |>
-  hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = as.vector(gradient(c("#FC9D88","#EF3106", "#501002"), 5)))
+  emissions_plot(
+    group_id = "activity",
+    color_list = gradient(c("#FC9D88","#EF3106", "#501002"), 5)
+  )
 
 hc_plot
 
@@ -382,12 +198,11 @@ hc_plot
 
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão"),
     as.numeric(year) >= 1990,
-    level_1 == "Resíduos"
+    scope == "Resíduos"
   ) |>
-  dplyr::group_by(level_3, year) |>
+  dplyr::group_by(activity, year) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
   dplyr::mutate(emission = emission * 1e-6, digits = 0) |>
   group_by(year) |>
@@ -397,27 +212,10 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_3)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
-  hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
+  hc_yAxis(title = list(text = "Percentage CO<sub>2</sub>-eq emissions (%)")) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#FC9D88","#EF3106", "#501002"), 5)))
 
@@ -444,31 +242,9 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-    level_1 == "Processos Industriais"
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(seeg_scope = "Processos Industriais")
 
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#F0BCD1",
-    maxColor = "#D23775"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+hc_map <- maps_plot(min_color = "#F0BCD1", max_color = "#D23775")
 
 hc_map
 
@@ -481,44 +257,17 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990,
-    level_1 == "Processos Industriais"
-  ) |>
-  dplyr::group_by(level_2, year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6, digits = 0)
+plot_data <- 
+  emissions_table(
+    seeg_activity = TRUE, 
+    seeg_scope = "Processos Industriais", 
+    type_list = "Emissão"
+  )
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_2)
-  ) |>
-  hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = as.vector(gradient(c("#F0BCD1","#D23775", "#430F24"), 6)))
+  emissions_plot(
+    color_list = gradient(c("#F0BCD1","#D23775", "#430F24"), 6)
+  )
 
 hc_plot
 
@@ -533,12 +282,11 @@ hc_plot
 
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão"),
     as.numeric(year) >= 1990,
-    level_1 == "Processos Industriais"
+    scope == "Processos Industriais"
   ) |>
-  dplyr::group_by(level_2, year) |>
+  dplyr::group_by(activity, year) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
   dplyr::mutate(emission = emission * 1e-6) |>
   group_by(year) |>
@@ -548,27 +296,14 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_2)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
   hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
     title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)"
+    )
   ) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#F0BCD1","#D23775", "#430F24"), 6)))
 
@@ -593,31 +328,9 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-    level_1 == "Energia"
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(seeg_scope = "Energia")
 
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#B0BCD4",
-    maxColor = "#242E42"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+hc_map <- maps_plot(min_color = "#B0BCD4", max_color = "#242E42")
 
 hc_map
 
@@ -630,45 +343,18 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990,
-    level_1 == "Energia",
-    !level_3 %in% c("Não Identificado", "Público", "Comercial")
-  ) |>
-  dplyr::group_by(level_3, year) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6)
+plot_data <- 
+  emissions_table(
+    seeg_activity = TRUE, 
+    seeg_scope = "Energia", 
+    type_list = "Emissão"
+  ) %>%
+  filter(!activity %in% c("Não Identificado", "Público", "Comercial"))
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_3)
-  ) |>
-  hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = as.vector(gradient(c("#B0BCD4","#6179A8", "#242E42"), 6)))
+  emissions_plot(
+    color_list = gradient(c("#B0BCD4","#6179A8", "#242E42"), 6)
+  )
 
 hc_plot
 
@@ -683,13 +369,12 @@ hc_plot
 
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão"),
     as.numeric(year) >= 1990,
-    level_1 == "Energia",
-    !level_3 %in% c("Não Identificado", "Público", "Comercial")
+    scope == "Energia",
+    !activity %in% c("Não Identificado", "Público", "Comercial")
   ) |>
-  dplyr::group_by(level_3, year) |>
+  dplyr::group_by(activity, year) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
   dplyr::mutate(emission = emission * 1e-6) |>
   group_by(year) |>
@@ -699,27 +384,14 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_3)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
   hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
     title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)"
+    )
   ) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#B0BCD4","#6179A8", "#242E42"), 6)))
 
@@ -744,31 +416,9 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-    level_1 == "Agropecuária"
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(seeg_scope = "Agropecuária")
 
-hc_map <-
-hcmap(
-  map = "countries/br/br-all", 
-  data = plot_data,
-  joinBy = "postal-code", 
-  value = "emission",
-  dataLabels = list(enabled = TRUE, format = "{point.postal-code}")
-) |>
-   hc_colorAxis(
-    minColor = "#F9DCB3",
-    maxColor = "#432905"
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt")
+hc_map <- maps_plot(min_color = "#F9DCB3", max_color = "#432905")
 
 hc_map
 
@@ -781,64 +431,17 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-agri <- seeg %>%
-  filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990,
-    level_1 == "Agropecuária"
-  ) %>%
-  group_by(level_6) %>%
-  summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(emission)) %>%
-  slice_head(n = 5) %>%
-  pull(level_6)
-
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão", "Remoção"),
-    as.numeric(year) >= 1990,
-    level_1 == "Agropecuária",
-  ) |>
-  mutate(
-    level_6 = if_else(
-      level_6 %in% agri, 
-      level_6,
-      "Outro"
-    )
-  ) |>
-  dplyr::group_by(level_6, year, type) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6)
-
+plot_data <- 
+  emissions_table(
+    seeg_activity = TRUE,
+    seeg_scope = "Agropecuária", 
+    type_list = "Emissão"
+  )
+  
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_6)
-  ) |>
-  hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = as.vector(gradient(c("#F9DCB3","#EE961B", "#432905"), 6)))
+  emissions_plot(
+    color_list = gradient(c("#F9DCB3","#EE961B", "#432905"), 6)
+  )
 
 hc_plot
 
@@ -851,34 +454,13 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-agri <- seeg %>%
-  filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) >= 1990,
-    level_1 == "Agropecuária"
-  ) %>%
-  group_by(level_6) %>%
-  summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") %>%
-  arrange(desc(emission)) %>%
-  slice_head(n = 5) %>%
-  pull(level_6)
-
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão", "Remoção"),
     as.numeric(year) >= 1990,
-    level_1 == "Agropecuária",
+    scope == "Agropecuária",
   ) |>
-  mutate(
-    level_6 = if_else(
-      level_6 %in% agri, 
-      level_6,
-      "Outro"
-    )
-  ) |>
-  dplyr::group_by(level_6, year, type) |>
+  dplyr::group_by(activity, year, type) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
   dplyr::mutate(emission = emission * 1e-6) |>
   group_by(year) |>
@@ -888,27 +470,14 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_6)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
   hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
     title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)"
+    )
   ) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "%") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#F9DCB3","#EE961B", "#432905"), 6)))
 
@@ -925,12 +494,11 @@ hc_plot
 
 plot_data <- seeg |>
   dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão NCI", "Remoção NCI"),
     as.numeric(year) >= 1990,
-    level_1 == "Agropecuária",
+    scope == "Agropecuária",
   ) |>
-  dplyr::group_by(level_6, year, type) |>
+  dplyr::group_by(activity, year, type) |>
   dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
   dplyr::mutate(emission = emission * 1e-6)
 
@@ -938,27 +506,14 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_6)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
   hc_yAxis(
-    #max = 3200, 
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px")
-    ),
-    labels = list(style = list(fontSize = "14px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "14px"))
+    title = list( 
+      text = "CO<sub>2</sub>-eq emissions (Mt)"
+    )
   ) |>
   hc_tooltip(valueDecimals = 0, valueSuffix = "Mt") |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#F9DCB3","#EE961B", "#432905"), 6)))
 
@@ -983,40 +538,9 @@ hc_plot
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg |>
-  dplyr::filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão"),
-    as.numeric(year) == 2020,
-    level_1 == "Mudança de Uso da Terra e Floresta"
-  ) |>
-  dplyr::group_by(state) |>
-  dplyr::summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") |>
-  dplyr::mutate(emission = emission * 1e-6) |>
-  rename(`postal-code` = state)
+plot_data <- maps_table(seeg_scope = "Mudança de Uso da Terra e Floresta")
 
-hc_map <- 
-  hcmap(
-    map = "countries/br/br-all", 
-    data = plot_data,
-    joinBy = "postal-code", 
-    value = "emission",
-    dataLabels = list(
-      enabled = TRUE, 
-      format = "{point.postal-code}",
-      style = list(fontSize = "16px")
-    )
-  ) |>
-  hc_colorAxis(
-    minColor = "#8BBB96",
-    maxColor = "#26402C"
-  ) |>
-  hc_tooltip(
-      style = list(fontSize = "18px"),
-      valueDecimals = 0, 
-      valueSuffix = "Mt",
-      shared = TRUE
-    )
+hc_map <- maps_plot(min_color = "#8BBB96", max_color = "#26402C")
 
 hc_map
 
@@ -1029,59 +553,17 @@ hc_map
 #| echo: false
 #| output-location: slide
 
-plot_data <- seeg %>%
-  filter(
-    gas == "CO2e (t) GWP-AR5",
-    type %in% c("Emissão", "Remoção"),
-    as.numeric(year) >= 1990,
-    level_1 == "Mudança de Uso da Terra e Floresta"
-  ) %>%
-  group_by(level_2, year) %>%
-  summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") %>%
-  mutate(
-    emission = emission * 1e-6,
-    level_2 = factor(
-      level_2,
-      levels = c(
-        "Resíduos Florestais", "Alterações de Uso do Solo",
-        "Remoção em Áreas Protegidas", "Remoção por Mudança de Uso da Terra",
-        "Remoção por Vegetação Secundária"
-      )
-    )
+plot_data <- 
+  emissions_table(
+    seeg_activity = TRUE,
+    seeg_scope = "Mudança de Uso da Terra e Floresta",
+    type_list = c("Emissão", "Remoção")
   )
 
 hc_plot <- 
-  hchart(
-    object = plot_data, 
-    type = "column", 
-    hcaes(x = year, y = emission, group = level_2)
-  ) |>
-  hc_yAxis(
-    endOnTick = FALSE, 
-    title = list(
-      useHTML = TRUE, 
-      text = "CO<sub>2</sub>-eq emissions (Mt)", 
-      style = list(fontSize = "18px", fontWeight = "bold")
-    ),
-    labels = list(style = list(fontSize = "18px"))
-  ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "18px"))
-  ) |>
-  hc_tooltip(
-    style = list(fontSize = "18px"),
-    valueDecimals = 0, 
-    valueSuffix = "Mt",
-    shared = TRUE
-  ) |>
-  hc_legend(itemStyle = list(fontSize = "16px")) |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
-  hc_add_theme(a11y_theme) |>
-  hc_colors(colors = as.vector(gradient(c("#8BBB96","#5B9A69", "#26402C"), 5)))
+  emissions_plot(
+    color_list = gradient(c("#8BBB96","#5B9A69", "#26402C"), 5)
+  )
 
 hc_plot
 
@@ -1096,23 +578,14 @@ hc_plot
 
 plot_data <- seeg %>%
   filter(
-    gas == "CO2e (t) GWP-AR5",
     type %in% c("Emissão", "Remoção"),
     as.numeric(year) >= 1990,
-    level_1 == "Mudança de Uso da Terra e Floresta"
+    scope == "Mudança de Uso da Terra e Floresta"
   ) %>%
-  group_by(level_2, type, year) %>%
+  group_by(activity, type, year) %>%
   summarise(emission = sum(emission, na.rm = TRUE), .groups = "drop") %>%
   mutate(
-    emission = emission * 1e-6,
-    level_2 = factor(
-      level_2,
-      levels = c(
-        "Resíduos Florestais", "Alterações de Uso do Solo",
-        "Remoção em Áreas Protegidas", "Remoção por Mudança de Uso da Terra",
-        "Remoção por Vegetação Secundária"
-      )
-    )
+    emission = emission * 1e-6
   ) |>
   group_by(year, type) |>
   mutate(emission = emission / sum(emission) * 100) |>
@@ -1122,33 +595,16 @@ hc_plot <-
   hchart(
     object = plot_data, 
     type = "column", 
-    hcaes(x = year, y = emission, group = level_2)
+    hcaes(x = year, y = emission, group = activity)
   ) |>
   hc_yAxis(
     min = -100, 
     endOnTick = FALSE, 
     title = list(
-      useHTML = TRUE, 
-      text = "Percentage CO<sub>2</sub>-eq emissions (%)", 
-      style = list(fontSize = "18px", fontWeight = "bold")
-    ),
-    labels = list(style = list(fontSize = "18px"))
+      text = "Percentage CO<sub>2</sub>-eq emissions (%)"
+    )
   ) |>
-  hc_xAxis(
-    title = list(text = NULL), 
-    labels = list(style = list(fontSize = "18px"))
-  ) |>
-  hc_tooltip(
-    style = list(fontSize = "18px"),
-    valueDecimals = 0, 
-    valueSuffix = "%",
-    shared = TRUE
-  ) |>
-  hc_legend(itemStyle = list(fontSize = "16px")) |>
-  hc_plotOptions(
-    series = list(stacking = "normal"), 
-    column = list(pointWidth = 22)
-  ) |>
+  hc_tooltip(valueSuffix = "%") |>
   hc_add_theme(a11y_theme) |>
   hc_colors(colors = as.vector(gradient(c("#8BBB96","#5B9A69", "#26402C"), 5)))
 
