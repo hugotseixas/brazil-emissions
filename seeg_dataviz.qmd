@@ -42,7 +42,7 @@ source("R/plot_obj.R")
 
 -   So Brazil emitted only <B>`r round(br_emission_2020/50.1 * 100, 1)`%</B> of all the emission in 2020?
 
-- But countries that emitted lass than Brazil accounts for almost <B>40%</B> of all the emissions!
+- But countries that emitted less than Brazil accounts for almost <B>40%</B> of all the emissions!
 
 - <B>Every country have to decrease emissions!</B>
 
